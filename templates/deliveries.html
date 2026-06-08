@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="topbar"><h1>Historial de entregas</h1><a class="button" href="{{ url_for('add_delivery') }}">Nueva entrega</a></div>
+<table>
+  <tr><th>Fecha</th><th>Empleado</th><th>Producto</th><th>Cantidad</th><th>Foto</th><th>PDF</th></tr>
+  {% for delivery in deliveries %}
+  <tr>
+    <td>{{ delivery.delivered_at.strftime('%Y-%m-%d %H:%M') }}</td>
+    <td>{{ delivery.employee.name }}</td>
+    <td>{{ delivery.product.name }}</td>
+    <td>{{ delivery.quantity }}</td>
+    <td>{% if delivery.photo_filename %}<a href="{{ url_for('static', filename='uploads/' ~ delivery.photo_filename) }}">Ver</a>{% else %}-{% endif %}</td>
+    <td><a class="button small" href="{{ url_for('delivery_pdf', delivery_id=delivery.id) }}">PDF</a></td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

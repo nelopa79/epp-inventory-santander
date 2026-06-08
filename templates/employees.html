@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Empleados</h1>
+<form method="post" class="form-card grid">
+  <input name="name" placeholder="Nombre completo" required>
+  <input name="position" placeholder="Cargo">
+  <input name="company" placeholder="Empresa">
+  <button class="button">Agregar empleado</button>
+</form>
+<table>
+  <tr><th>Nombre</th><th>Cargo</th><th>Empresa</th></tr>
+  {% for employee in employees %}
+  <tr><td>{{ employee.name }}</td><td>{{ employee.position }}</td><td>{{ employee.company }}</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

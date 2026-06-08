@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Movimientos de inventario</h1>
+<table>
+  <tr><th>Fecha</th><th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Notas</th></tr>
+  {% for movement in movements %}
+  <tr><td>{{ movement.created_at.strftime('%Y-%m-%d %H:%M') }}</td><td>{{ movement.product.name }}</td><td>{{ movement.movement_type }}</td><td>{{ movement.quantity }}</td><td>{{ movement.notes }}</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inventario EPP Santander</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <nav class="nav">
+    <div class="brand">Inventario EPP Santander</div>
+    <div class="links">
+      <a href="{{ url_for('index') }}">Inicio</a>
+      <a href="{{ url_for('products') }}">Productos</a>
+      <a href="{{ url_for('employees') }}">Empleados</a>
+      <a href="{{ url_for('add_delivery') }}">Nueva entrega</a>
+      <a href="{{ url_for('deliveries') }}">Historial</a>
+      <a href="{{ url_for('low_stock') }}">Stock bajo</a>
+    </div>
+  </nav>
+
+  <main class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

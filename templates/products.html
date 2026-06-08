@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="topbar"><h1>Productos</h1><a class="button" href="{{ url_for('add_product') }}">Agregar producto</a></div>
+<table>
+  <tr><th>Producto</th><th>Categoría</th><th>Cantidad</th><th>Mínimo</th><th>Actualizar stock</th></tr>
+  {% for product in products %}
+  <tr class="{% if product.quantity <= product.min_stock %}row-warning{% endif %}">
+    <td>{{ product.name }}</td><td>{{ product.category }}</td><td>{{ product.quantity }}</td><td>{{ product.min_stock }}</td>
+    <td>
+      <form class="inline-form" method="post" action="{{ url_for('update_stock', product_id=product.id) }}">
+        <select name="movement_type"><option value="IN">Entrada</option><option value="OUT">Salida</option></select>
+        <input type="number" name="quantity" min="1" placeholder="Cant." required>
+        <input type="text" name="notes" placeholder="Nota">
+        <button>Guardar</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}
