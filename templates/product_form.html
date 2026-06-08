@@ -1,11 +1,1 @@
-{% extends "base.html" %}
-{% block content %}
-<h1>Agregar producto</h1>
-<form method="post" class="form-card">
-  <label>Nombre del producto</label><input name="name" required placeholder="Casco, chaleco, guantes...">
-  <label>Categoría</label><input name="category" required value="EPP">
-  <label>Cantidad inicial</label><input name="quantity" type="number" min="0" value="0" required>
-  <label>Stock mínimo para alerta</label><input name="min_stock" type="number" min="0" value="5" required>
-  <button class="button">Guardar producto</button>
-</form>
-{% endblock %}
+{% extends 'base.html' %}{% block content %}<h1>Nuevo producto</h1><form method="post" class="form"><label>Código</label><input name="code" placeholder="EPP-001" required><label>Nombre</label><input name="name" required><label>Categoría</label><input name="category" placeholder="EPP / Herramienta / Material" required><label>Cantidad inicial</label><input name="quantity" type="number" value="0" required><label>Stock mínimo</label><input name="min_stock" type="number" value="5" required><label>Ubicación</label><input name="location" placeholder="Container A"><button>Guardar producto</button></form>{% endblock %}

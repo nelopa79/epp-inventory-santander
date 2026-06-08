@@ -1,16 +1,1 @@
-{% extends "base.html" %}
-{% block content %}
-<h1>Empleados</h1>
-<form method="post" class="form-card grid">
-  <input name="name" placeholder="Nombre completo" required>
-  <input name="position" placeholder="Cargo">
-  <input name="company" placeholder="Empresa">
-  <button class="button">Agregar empleado</button>
-</form>
-<table>
-  <tr><th>Nombre</th><th>Cargo</th><th>Empresa</th></tr>
-  {% for employee in employees %}
-  <tr><td>{{ employee.name }}</td><td>{{ employee.position }}</td><td>{{ employee.company }}</td></tr>
-  {% endfor %}
-</table>
-{% endblock %}
+{% extends 'base.html' %}{% block content %}<h1>Empleados por sticker</h1><form method="post" class="form grid"><input name="sticker" placeholder="Sticker" required><input name="name" placeholder="Nombre" required><input name="position" placeholder="Cargo"><input name="company" placeholder="Empresa"><button>Guardar empleado</button></form><table><tr><th>Sticker</th><th>Nombre</th><th>Cargo</th><th>Empresa</th><th>Activo</th></tr>{% for e in employees %}<tr><td>{{e.sticker}}</td><td>{{e.name}}</td><td>{{e.position}}</td><td>{{e.company}}</td><td>{{'Sí' if e.active else 'No'}}</td></tr>{% endfor %}</table>{% endblock %}
