@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Reporte por empresa</h1>
+<form method="get" class="form grid">
+  <div><label>Desde</label><input type="date" name="start" value="{{start_date}}"></div>
+  <div><label>Hasta</label><input type="date" name="end" value="{{end_date}}"></div>
+  <div><label>Empresa</label><select name="company"><option value="">Todas</option>{% for c in company_names %}<option value="{{c}}" {% if company_filter==c %}selected{% endif %}>{{c}}</option>{% endfor %}</select></div>
+  <button>Ver reporte</button>
+</form>
+<p><a class="btn" href="{{ url_for('company_report_export_csv', start=start_date, end=end_date) }}">Exportar CSV</a></p>
+<table>
+<tr><th>Empresa</th><th>Empleados</th><th>Entregas</th><th>Unidades</th><th>Guantes</th><th>Gafas/Lentes</th></tr>
+{% for r in rows %}
+<tr class="{% if r.guantes >= 20 or r.gafas >= 10 %}low{% endif %}"><td>{{r.company}}</td><td>{{r.employees}}</td><td>{{r.deliveries}}</td><td>{{r.units}}</td><td>{{r.guantes}}</td><td>{{r.gafas}}</td></tr>
+{% endfor %}
+</table>
+<h2>Detalle por producto</h2>
+{% for r in rows %}
+<h3>{{r.company}}</h3>
+<table><tr><th>Producto</th><th>Cantidad entregada</th></tr>{% for product, qty in r.products.items() %}<tr><td>{{product}}</td><td>{{qty}}</td></tr>{% endfor %}</table>
+{% endfor %}
+{% endblock %}

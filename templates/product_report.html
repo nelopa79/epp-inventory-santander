@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Reporte por producto</h1>
+<form method="get" class="form grid">
+  <div><label>Desde</label><input type="date" name="start" value="{{start_date}}"></div>
+  <div><label>Hasta</label><input type="date" name="end" value="{{end_date}}"></div>
+  <button>Ver reporte</button>
+</form>
+<table>
+<tr><th>Código</th><th>Producto</th><th>Entradas</th><th>Salidas/Entregas</th><th>Ajustes</th><th>Stock actual</th><th>Mínimo</th></tr>
+{% for r in rows %}
+<tr class="{% if r.low %}low{% endif %}"><td>{{r.product.code}}</td><td>{{r.product.name}}</td><td>{{r.entradas}}</td><td>{{r.salidas}}</td><td>{{r.ajustes}}</td><td>{{r.stock}}</td><td>{{r.product.min_stock}}</td></tr>
+{% endfor %}
+</table>
+{% endblock %}

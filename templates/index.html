@@ -1,1 +1,19 @@
-{% extends 'base.html' %}{% block content %}<h1>Panel principal</h1><div class="cards"><div><h2>{{total_products}}</h2><p>Productos</p></div><div><h2>{{total_employees}}</h2><p>Empleados activos</p></div><div><h2>{{low_stock|length}}</h2><p>Stock bajo</p></div><div><h2>{{total_companies}}</h2><p>Empresas</p></div></div><h2>Últimas entregas</h2><table><tr><th>Fecha</th><th>Sticker</th><th>Empleado</th><th>Producto</th><th>Cant.</th></tr>{% for d in last_deliveries %}<tr><td>{{d.date.strftime('%Y-%m-%d')}}</td><td>{{d.employee.sticker}}</td><td>{{d.employee.name}}</td><td>{{d.product.code}} - {{d.product.name}}</td><td>{{d.quantity}}</td></tr>{% endfor %}</table>{% endblock %}
+{% extends 'base.html' %}
+{% block content %}
+<h1>Panel principal</h1>
+<div class="cards">
+  <div><h2>{{total_products}}</h2><p>Productos</p></div>
+  <div><h2>{{total_employees}}</h2><p>Empleados activos</p></div>
+  <div><h2>{{total_companies}}</h2><p>Empresas</p></div>
+  <div><h2>{{low_stock|length}}</h2><p>Stock bajo</p></div>
+  <div><h2>{{month_deliveries}}</h2><p>Entregas del mes</p></div>
+  <div><h2>{{month_entries}}</h2><p>Entradas del mes</p></div>
+</div>
+<h2>Últimas entregas</h2>
+<table>
+<tr><th>Fecha</th><th>Sticker</th><th>Empleado</th><th>Empresa</th><th>Producto</th><th>Cant.</th></tr>
+{% for d in last_deliveries %}
+<tr><td>{{d.date.strftime('%Y-%m-%d')}}</td><td>{{d.employee.sticker}}</td><td>{{d.employee.name}}</td><td>{{d.employee.company}}</td><td>{{d.product.code}} - {{d.product.name}}</td><td>{{d.quantity}}</td></tr>
+{% endfor %}
+</table>
+{% endblock %}

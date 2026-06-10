@@ -1,0 +1,11 @@
+{
+  "name": "Inventario EPP Santander",
+  "short_name": "EPP Santander",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme_color": "#0b3d2e",
+  "description": "Control de inventario EPP, entregas, empresas y reportes.",
+  "icons": [{"src":"/static/icon.svg","sizes":"any","type":"image/svg+xml"}]
+}

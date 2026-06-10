@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{% if movement_type == 'entrada' %}Agregar stock{% elif movement_type == 'salida' %}Retirar stock{% else %}Ajustar stock{% endif %}</h1>
+<div class="form">
+  <p><b>Producto:</b> {{product.code}} - {{product.name}}</p>
+  <p><b>Stock actual:</b> {{product.quantity}}</p>
+</div>
+<form method="post" class="form">
+  <label>{% if movement_type == 'ajuste' %}Nuevo stock total{% else %}Cantidad{% endif %}</label>
+  <input name="quantity" type="number" min="0" required>
+  <label>Nota / Motivo</label>
+  <input name="notes" placeholder="Compra, devolución, ajuste, daño, etc.">
+  <button>Guardar</button>
+  <a class="btn secondary" href="{{ url_for('products') }}">Cancelar</a>
+</form>
+{% endblock %}

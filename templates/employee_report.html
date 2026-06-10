@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Reporte por empleado</h1>
+<form method="get" class="form grid">
+  <div><label>Desde</label><input type="date" name="start" value="{{start_date}}"></div>
+  <div><label>Hasta</label><input type="date" name="end" value="{{end_date}}"></div>
+  <div><label>Empleado / Sticker</label><select name="employee_id"><option value="">Seleccione empleado</option>{% for e in employees %}<option value="{{e.id}}" {% if selected_employee and selected_employee.id==e.id %}selected{% endif %}>{{e.sticker}} - {{e.name}} - {{e.company}}</option>{% endfor %}</select></div>
+  <button>Ver historial</button>
+</form>
+{% if selected_employee %}
+<h2>{{selected_employee.sticker}} - {{selected_employee.name}}</h2>
+<p><b>Empresa:</b> {{selected_employee.company}} | <b>Cargo:</b> {{selected_employee.position}}</p>
+<div class="cards">{% for product, qty in totals.items() %}<div><h2>{{qty}}</h2><p>{{product}}</p></div>{% endfor %}</div>
+<table><tr><th>Fecha</th><th>Producto</th><th>Cantidad</th><th>PDF</th></tr>{% for d in deliveries %}<tr><td>{{d.date.strftime('%Y-%m-%d %H:%M')}}</td><td>{{d.product.code}} - {{d.product.name}}</td><td>{{d.quantity}}</td><td><a href="{{ url_for('delivery_pdf', delivery_id=d.id) }}">PDF</a></td></tr>{% endfor %}</table>
+{% endif %}
+{% endblock %}

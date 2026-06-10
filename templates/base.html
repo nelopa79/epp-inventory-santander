@@ -1,5 +1,43 @@
 <!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Inventario EPP Santander</title><link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"></head><body>
-{% if session.get('user_id') %}<nav><b>Inventario EPP Santander</b><a href="{{ url_for('index') }}">Inicio</a><a href="{{ url_for('products') }}">Productos</a><a href="{{ url_for('employees') }}">Empleados</a><a href="{{ url_for('companies') }}">Empresas</a><a href="{{ url_for('stock') }}">Stock</a><a href="{{ url_for('deliveries') }}">Nueva entrega</a><a href="{{ url_for('history') }}">Historial</a><a href="{{ url_for('low_stock') }}">Stock bajo</a><a href="{{ url_for('reports') }}">Reportes</a><a class="right" href="{{ url_for('logout') }}">Salir</a></nav>{% endif %}
-<main>{% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert {{category}}">{{message}}</div>{% endfor %}{% endwith %}{% block content %}{% endblock %}</main>
-</body></html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inventario EPP Santander</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+  <meta name="theme-color" content="#0b3d2e">
+  <link rel="icon" href="{{ url_for('static', filename='icon.svg') }}">
+</head>
+<body>
+{% if session.get('user_id') %}
+<nav>
+  <b>Inventario EPP Santander</b>
+  <a href="{{ url_for('index') }}">Inicio</a>
+  <a href="{{ url_for('products') }}">Productos</a>
+  <a href="{{ url_for('employees') }}">Empleados</a>
+  <a href="{{ url_for('companies') }}">Empresas</a>
+  <a href="{{ url_for('stock') }}">Stock</a>
+  <a href="{{ url_for('deliveries') }}">Nueva entrega</a>
+  <a href="{{ url_for('history') }}">Historial</a>
+  <a href="{{ url_for('low_stock') }}">Stock bajo</a>
+  <a href="{{ url_for('reports') }}">Reporte EPP</a>
+  <a href="{{ url_for('company_report') }}">Reporte empresas</a>
+  <a href="{{ url_for('employee_report') }}">Reporte empleados</a>
+  <a href="{{ url_for('product_report') }}">Reporte productos</a>
+  <a class="right" href="{{ url_for('logout') }}">Salir</a>
+</nav>
+{% endif %}
+<main>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for category, message in messages %}<div class="alert {{category}}">{{message}}</div>{% endfor %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(function(){});
+}
+</script>
+</body>
+</html>
