@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Nueva entrega EPP</h1>
+<div class="alert info">V3.0: si entregas guantes o gafas/lentes, el sistema revisa el consumo semanal del empleado y muestra alerta si ya recibió durante la semana.</div>
+<form method="post" enctype="multipart/form-data" class="form">
+  <label>Empleado / Sticker</label>
+  <select name="employee_id" required>
+    {% for e in employees %}<option value="{{e.id}}">{{e.sticker}} - {{e.name}}</option>{% endfor %}
+  </select>
+  <label>Producto</label>
+  <select name="product_id" required>
+    {% for p in products %}<option value="{{p.id}}">{{p.code}} - {{p.name}} (Stock: {{p.quantity}})</option>{% endfor %}
+  </select>
+  <label>Cantidad</label>
+  <input name="quantity" type="number" min="1" required>
+  <label>Foto de evidencia</label>
+  <input name="photo" type="file" accept="image/*" capture="environment">
+  <button>Guardar entrega</button>
+</form>
+{% endblock %}

@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, date, time, timedelta
+from datetime import datetime, time, timedelta
 from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_file, Response
 from flask_sqlalchemy import SQLAlchemy
@@ -34,6 +34,13 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     role = db.Column(db.String(50), default="admin")
     active = db.Column(db.Boolean, default=True)
+
+
+class Company(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), unique=True, nullable=False)
+    active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
 class Product(db.Model):
@@ -78,7 +85,6 @@ class Delivery(db.Model):
 
     employee = db.relationship("Employee")
     product = db.relationship("Product")
-
 
 
 CONTROL_KEYWORDS = {
@@ -175,11 +181,47 @@ def logout():
 @app.route("/")
 @login_required
 def index():
+    today = datetime.utcnow().date()
+    week_start = today - timedelta(days=today.weekday())
+    month_start = today.replace(day=1)
     total_products = Product.query.count()
     total_employees = Employee.query.filter_by(active=True).count()
+    total_companies = Company.query.count()
     low_stock = Product.query.filter(Product.quantity <= Product.min_stock).all()
     last_deliveries = Delivery.query.order_by(Delivery.date.desc()).limit(5).all()
-    return render_template("index.html", total_products=total_products, total_employees=total_employees, low_stock=low_stock, last_deliveries=last_deliveries)
+    deliveries_week = delivery_query_between(week_start, today).count()
+    deliveries_month = delivery_query_between(month_start, today).count()
+    return render_template(
+        "index.html",
+        total_products=total_products,
+        total_employees=total_employees,
+        total_companies=total_companies,
+        low_stock=low_stock,
+        last_deliveries=last_deliveries,
+        deliveries_week=deliveries_week,
+        deliveries_month=deliveries_month,
+    )
+
+
+@app.route("/companies", methods=["GET", "POST"])
+@login_required
+def companies():
+    if request.method == "POST":
+        name = request.form.get("name", "").strip()
+        if not name:
+            flash("El nombre de la empresa es obligatorio", "danger")
+            return redirect(url_for("companies"))
+        company = Company(name=name)
+        db.session.add(company)
+        try:
+            db.session.commit()
+            flash("Empresa creada correctamente", "success")
+        except Exception:
+            db.session.rollback()
+            flash("La empresa ya existe", "danger")
+        return redirect(url_for("companies"))
+    companies = Company.query.order_by(Company.name).all()
+    return render_template("companies.html", companies=companies)
 
 
 @app.route("/products")
@@ -235,18 +277,25 @@ def employees():
             flash("Ese sticker ya existe", "danger")
         return redirect(url_for("employees"))
     employees = Employee.query.order_by(Employee.name).all()
-    return render_template("employees.html", employees=employees)
+    companies = Company.query.filter_by(active=True).order_by(Company.name).all()
+    return render_template("employees.html", employees=employees, companies=companies)
 
 
 @app.route("/stock", methods=["GET", "POST"])
 @login_required
 def stock():
     products = Product.query.order_by(Product.code).all()
+    selected_product_id = request.args.get("product_id", "")
+    selected_type = request.args.get("type", "entrada")
     if request.method == "POST":
         product = Product.query.get_or_404(int(request.form["product_id"]))
         movement_type = request.form["movement_type"]
         qty = int(request.form["quantity"])
         notes = request.form.get("notes", "")
+
+        if qty <= 0:
+            flash("La cantidad debe ser mayor que cero", "danger")
+            return redirect(url_for("stock"))
 
         if movement_type == "entrada":
             product.quantity += qty
@@ -263,7 +312,7 @@ def stock():
         db.session.commit()
         flash("Movimiento guardado", "success")
         return redirect(url_for("products"))
-    return render_template("stock.html", products=products)
+    return render_template("stock.html", products=products, selected_product_id=selected_product_id, selected_type=selected_type)
 
 
 @app.route("/deliveries", methods=["GET", "POST"])
@@ -325,7 +374,6 @@ def low_stock():
     return render_template("low_stock.html", products=products)
 
 
-
 @app.route("/reports")
 @login_required
 def reports():
@@ -361,6 +409,47 @@ def reports():
         start_date=start_date,
         end_date=end_date,
     )
+
+
+@app.route("/reports/company")
+@login_required
+def company_report():
+    today = datetime.utcnow().date()
+    start_default = today - timedelta(days=today.weekday())
+    end_default = start_default + timedelta(days=6)
+    start_date = parse_date(request.args.get("start"), start_default)
+    end_date = parse_date(request.args.get("end"), end_default)
+
+    deliveries = delivery_query_between(start_date, end_date).all()
+    company_data = {}
+    for d in deliveries:
+        company = (d.employee.company or "Sin empresa").strip() or "Sin empresa"
+        if company not in company_data:
+            company_data[company] = {"total": 0, "employees": set(), "products": {}}
+        company_data[company]["total"] += d.quantity
+        company_data[company]["employees"].add(d.employee.name)
+        key = f"{d.product.code} - {d.product.name}"
+        company_data[company]["products"][key] = company_data[company]["products"].get(key, 0) + d.quantity
+
+    rows = []
+    for company, data in company_data.items():
+        rows.append({"company": company, "total": data["total"], "employees_count": len(data["employees"]), "products": data["products"]})
+    rows.sort(key=lambda r: r["total"], reverse=True)
+    return render_template("company_report.html", rows=rows, start_date=start_date, end_date=end_date)
+
+
+@app.route("/reports/product")
+@login_required
+def product_report():
+    products = Product.query.order_by(Product.code).all()
+    rows = []
+    for p in products:
+        entrada = sum(m.quantity for m in StockMovement.query.filter_by(product_id=p.id, movement_type="entrada").all())
+        salida = sum(m.quantity for m in StockMovement.query.filter_by(product_id=p.id, movement_type="salida").all())
+        ajuste = sum(m.quantity for m in StockMovement.query.filter_by(product_id=p.id, movement_type="ajuste").all())
+        entrega = sum(m.quantity for m in StockMovement.query.filter_by(product_id=p.id, movement_type="entrega").all())
+        rows.append({"product": p, "entrada": entrada, "salida": salida, "ajuste": ajuste, "entrega": entrega})
+    return render_template("product_report.html", rows=rows)
 
 
 @app.route("/reports/export.csv")
@@ -421,12 +510,21 @@ def delivery_pdf(delivery_id):
     return send_file(pdf_path, as_attachment=True)
 
 
+def seed_companies_from_employees():
+    names = {e.company.strip() for e in Employee.query.all() if e.company and e.company.strip()}
+    for name in names:
+        if not Company.query.filter_by(name=name).first():
+            db.session.add(Company(name=name))
+    db.session.commit()
+
+
 def init_db():
     db.create_all()
     if not User.query.filter_by(username="admin").first():
         user = User(username="admin", password_hash=generate_password_hash("admin123"), role="admin")
         db.session.add(user)
         db.session.commit()
+    seed_companies_from_employees()
 
 
 with app.app_context():

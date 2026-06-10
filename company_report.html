@@ -1,0 +1,1 @@
+{% extends 'base.html' %}{% block content %}<h1>Productos con stock bajo</h1><table><tr><th>Código</th><th>Producto</th><th>Stock</th><th>Mínimo</th><th>Ubicación</th></tr>{% for p in products %}<tr class="low"><td>{{p.code}}</td><td>{{p.name}}</td><td>{{p.quantity}}</td><td>{{p.min_stock}}</td><td>{{p.location}}</td></tr>{% endfor %}</table>{% endblock %}
