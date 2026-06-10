@@ -1,10 +1,14 @@
-{% extends 'base.html' %}{% block content %}
+{% extends 'base.html' %}
+{% block content %}
 <h1>Empresas</h1>
 <form method="post" class="form">
 <input name="name" placeholder="Nombre empresa" required>
 <button>Guardar Empresa</button>
 </form>
-<table><tr><th>Empresa</th><th>Activa</th></tr>
-{% for c in companies %}<tr><td>{{c.name}}</td><td>{{'Sí' if c.active else 'No'}}</td></tr>{% endfor %}
+<table>
+<tr><th>Empresa</th><th>Activa</th></tr>
+{% for c in companies %}
+<tr><td>{{c.name}}</td><td>{{'Sí' if c.active else 'No'}}</td></tr>
+{% endfor %}
 </table>
 {% endblock %}
