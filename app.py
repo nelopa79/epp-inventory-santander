@@ -36,6 +36,14 @@ class User(db.Model):
     active = db.Column(db.Boolean, default=True)
 
 
+
+class Company(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(120), unique=True, nullable=False)
+    active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+
 class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     code = db.Column(db.String(40), unique=True, nullable=False)
@@ -176,10 +184,29 @@ def logout():
 @login_required
 def index():
     total_products = Product.query.count()
+    total_companies = Company.query.count()
     total_employees = Employee.query.filter_by(active=True).count()
     low_stock = Product.query.filter(Product.quantity <= Product.min_stock).all()
     last_deliveries = Delivery.query.order_by(Delivery.date.desc()).limit(5).all()
-    return render_template("index.html", total_products=total_products, total_employees=total_employees, low_stock=low_stock, last_deliveries=last_deliveries)
+    return render_template("index.html", total_products=total_products, total_employees=total_employees, total_companies=total_companies, low_stock=low_stock, last_deliveries=last_deliveries)
+
+
+
+@app.route("/companies", methods=["GET","POST"])
+@login_required
+def companies():
+    if request.method == "POST":
+        company = Company(name=request.form["name"].strip())
+        db.session.add(company)
+        try:
+            db.session.commit()
+            flash("Empresa creada correctamente","success")
+        except Exception:
+            db.session.rollback()
+            flash("La empresa ya existe","danger")
+        return redirect(url_for("companies"))
+    companies = Company.query.order_by(Company.name).all()
+    return render_template("companies.html", companies=companies)
 
 
 @app.route("/products")
