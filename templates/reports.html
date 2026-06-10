@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Reportes V3.0: guantes y gafas por empleado</h1>
+<p class="muted">Control por semana o rango de fechas para detectar consumo alto de guantes, gafas o lentes.</p>
+
+<form method="get" class="form grid">
+  <div>
+    <label>Desde</label>
+    <input type="date" name="start" value="{{ start_date }}">
+  </div>
+  <div>
+    <label>Hasta</label>
+    <input type="date" name="end" value="{{ end_date }}">
+  </div>
+  <div>
+    <label>Empleado / Sticker</label>
+    <select name="employee_id">
+      <option value="">Todos los empleados</option>
+      {% for e in employees %}
+        <option value="{{ e.id }}" {% if selected_employee and selected_employee.id == e.id %}selected{% endif %}>{{ e.sticker }} - {{ e.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button>Ver reporte</button>
+</form>
+
+<p><a class="btn" href="{{ url_for('reports_export_csv', start=start_date, end=end_date) }}">Exportar CSV</a></p>
+
+{% if selected_employee and employee_summary %}
+<h2>Resumen del empleado</h2>
+<div class="cards">
+  <div><h2>{{ employee_summary.guantes_qty }}</h2><p>Unidades de guantes</p></div>
+  <div><h2>{{ employee_summary.guantes_deliveries }}</h2><p>Entregas de guantes</p></div>
+  <div><h2>{{ employee_summary.gafas_qty }}</h2><p>Unidades de gafas/lentes</p></div>
+  <div><h2>{{ employee_summary.gafas_deliveries }}</h2><p>Entregas de gafas/lentes</p></div>
+</div>
+
+{% if employee_summary.guantes_qty >= 5 %}<div class="alert warning">Alerta: este empleado recibió {{ employee_summary.guantes_qty }} unidad(es) de guantes en este rango.</div>{% endif %}
+{% if employee_summary.gafas_qty >= 3 %}<div class="alert warning">Alerta: este empleado recibió {{ employee_summary.gafas_qty }} unidad(es) de gafas/lentes en este rango.</div>{% endif %}
+
+<h3>Detalle de entregas del empleado</h3>
+<table>
+  <tr><th>Fecha</th><th>Sticker</th><th>Empleado</th><th>Producto</th><th>Cantidad</th></tr>
+  {% for d in employee_summary.deliveries %}
+  <tr>
+    <td>{{ d.date.strftime('%Y-%m-%d %H:%M') }}</td>
+    <td>{{ d.employee.sticker }}</td>
+    <td>{{ d.employee.name }}</td>
+    <td>{{ d.product.code }} - {{ d.product.name }}</td>
+    <td>{{ d.quantity }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endif %}
+
+<h2>Resumen general</h2>
+<table>
+  <tr><th>Sticker</th><th>Empleado</th><th>Empresa</th><th>Guantes</th><th>Entregas guantes</th><th>Gafas/Lentes</th><th>Entregas gafas</th></tr>
+  {% for r in rows %}
+  <tr class="{% if r.guantes_qty >= 5 or r.gafas_qty >= 3 %}low{% endif %}">
+    <td>{{ r.employee.sticker }}</td>
+    <td>{{ r.employee.name }}</td>
+    <td>{{ r.employee.company }}</td>
+    <td>{{ r.guantes_qty }}</td>
+    <td>{{ r.guantes_deliveries }}</td>
+    <td>{{ r.gafas_qty }}</td>
+    <td>{{ r.gafas_deliveries }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}
