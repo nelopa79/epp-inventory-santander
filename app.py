@@ -328,6 +328,7 @@ def employees():
             name=request.form["name"].strip(),
             position=request.form.get("position", "").strip(),
             company=request.form.get("company", "").strip(),
+            active=True,
         )
         db.session.add(emp)
         try:
@@ -340,6 +341,37 @@ def employees():
     employees = Employee.query.order_by(Employee.name).all()
     companies = Company.query.filter_by(active=True).order_by(Company.name).all()
     return render_template("employees.html", employees=employees, companies=companies)
+
+
+@app.route("/employees/<int:employee_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_employee(employee_id):
+    employee = Employee.query.get_or_404(employee_id)
+    companies = Company.query.filter_by(active=True).order_by(Company.name).all()
+    if request.method == "POST":
+        employee.sticker = request.form["sticker"].strip()
+        employee.name = request.form["name"].strip()
+        employee.position = request.form.get("position", "").strip()
+        employee.company = request.form.get("company", "").strip()
+        employee.active = request.form.get("active") == "1"
+        try:
+            db.session.commit()
+            flash("Empleado actualizado correctamente", "success")
+            return redirect(url_for("employees"))
+        except Exception:
+            db.session.rollback()
+            flash("No se pudo actualizar. Verifica que el sticker no esté repetido.", "danger")
+    return render_template("employee_edit.html", employee=employee, companies=companies)
+
+
+@app.route("/employees/<int:employee_id>/toggle")
+@login_required
+def toggle_employee(employee_id):
+    employee = Employee.query.get_or_404(employee_id)
+    employee.active = not employee.active
+    db.session.commit()
+    flash("Estado del empleado actualizado", "success")
+    return redirect(url_for("employees"))
 
 
 @app.route("/stock", methods=["GET", "POST"])

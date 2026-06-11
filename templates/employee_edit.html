@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Editar empleado</h1>
+<form method="post" class="form">
+  <label>Sticker</label>
+  <input name="sticker" value="{{employee.sticker}}" required>
+
+  <label>Nombre</label>
+  <input name="name" value="{{employee.name}}" required>
+
+  <label>Cargo</label>
+  <input name="position" value="{{employee.position}}">
+
+  <label>Empresa / Contratista</label>
+  <select name="company">
+    <option value="">Sin empresa</option>
+    {% for c in companies %}
+      <option value="{{c.name}}" {% if employee.company == c.name %}selected{% endif %}>{{c.name}}</option>
+    {% endfor %}
+    {% if employee.company and employee.company not in companies|map(attribute='name')|list %}
+      <option value="{{employee.company}}" selected>{{employee.company}}</option>
+    {% endif %}
+  </select>
+
+  <label>Estado</label>
+  <select name="active">
+    <option value="1" {% if employee.active %}selected{% endif %}>Activo</option>
+    <option value="0" {% if not employee.active %}selected{% endif %}>Inactivo</option>
+  </select>
+
+  <button>Guardar cambios</button>
+  <a class="btn" href="{{ url_for('employees') }}">Cancelar</a>
+</form>
+{% endblock %}
