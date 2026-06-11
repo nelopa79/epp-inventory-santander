@@ -91,6 +91,26 @@ class Delivery(db.Model):
     product = db.relationship("Product")
 
 
+class DeliveryBatch(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    employee_id = db.Column(db.Integer, db.ForeignKey("employee.id"), nullable=False)
+    notes = db.Column(db.String(255), default="")
+    photo = db.Column(db.String(255), default="")
+    date = db.Column(db.DateTime, default=datetime.utcnow)
+
+    employee = db.relationship("Employee")
+
+
+class DeliveryBatchItem(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    batch_id = db.Column(db.Integer, db.ForeignKey("delivery_batch.id"), nullable=False)
+    product_id = db.Column(db.Integer, db.ForeignKey("product.id"), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+
+    batch = db.relationship("DeliveryBatch", backref="items")
+    product = db.relationship("Product")
+
+
 CONTROL_KEYWORDS = {
     "guantes": ["guante", "glove"],
     "gafas_lentes": ["gafa", "lente", "glass", "safety glass", "eye"],
@@ -451,12 +471,148 @@ def deliveries():
     return render_template("delivery_form.html", employees=employees, products=products)
 
 
+@app.route("/deliveries/multiple", methods=["GET", "POST"])
+@login_required
+def delivery_multiple():
+    employees = Employee.query.filter_by(active=True).order_by(Employee.name).all()
+    products = Product.query.order_by(Product.code).all()
+
+    if request.method == "POST":
+        employee = Employee.query.get_or_404(int(request.form["employee_id"]))
+        product_ids = request.form.getlist("product_id[]")
+        quantities = request.form.getlist("quantity[]")
+        notes = request.form.get("notes", "").strip()
+
+        selected_items = []
+        errors = []
+        for product_id, qty_text in zip(product_ids, quantities):
+            if not product_id or not qty_text:
+                continue
+            try:
+                qty = int(qty_text)
+            except ValueError:
+                errors.append("Cantidad inválida")
+                continue
+            if qty <= 0:
+                continue
+            product = Product.query.get(int(product_id))
+            if not product:
+                errors.append("Producto no encontrado")
+                continue
+            if product.quantity < qty:
+                errors.append(f"Stock insuficiente para {product.code} - {product.name}. Disponible: {product.quantity}")
+            selected_items.append((product, qty))
+
+        if not selected_items:
+            flash("Agrega al menos un producto con cantidad mayor a cero", "danger")
+            return redirect(url_for("delivery_multiple"))
+        if errors:
+            for error in errors:
+                flash(error, "danger")
+            return redirect(url_for("delivery_multiple"))
+
+        photo_file = request.files.get("photo")
+        photo_name = ""
+        if photo_file and photo_file.filename:
+            filename = secure_filename(photo_file.filename)
+            photo_name = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}_{filename}"
+            photo_file.save(os.path.join(app.config["UPLOAD_FOLDER"], photo_name))
+
+        batch = DeliveryBatch(employee_id=employee.id, notes=notes, photo=photo_name)
+        db.session.add(batch)
+        db.session.flush()
+
+        alert_messages = []
+        for product, qty in selected_items:
+            control_type = product_control_type(product)
+            if control_type in ["guantes", "gafas_lentes"]:
+                week_start, week_end_date = default_week_range()
+                previous = Delivery.query.filter(
+                    Delivery.employee_id == employee.id,
+                    Delivery.date >= datetime.combine(week_start, time.min),
+                    Delivery.date <= datetime.combine(week_end_date, time.max),
+                ).all()
+                previous_qty = sum(d.quantity for d in previous if product_control_type(d.product) == control_type)
+                if previous_qty > 0:
+                    item_name = "guantes" if control_type == "guantes" else "gafas/lentes"
+                    alert_messages.append(f"Alerta: {employee.name} ya recibió {previous_qty} unidad(es) de {item_name} esta semana.")
+
+            product.quantity -= qty
+            db.session.add(Delivery(employee_id=employee.id, product_id=product.id, quantity=qty, photo=photo_name))
+            db.session.add(DeliveryBatchItem(batch_id=batch.id, product_id=product.id, quantity=qty))
+            db.session.add(StockMovement(
+                product_id=product.id,
+                movement_type="entrega",
+                quantity=qty,
+                notes=f"Entrega múltiple #{batch.id} a sticker {employee.sticker} - {employee.name}. {notes}".strip(),
+            ))
+
+        db.session.commit()
+        for message in alert_messages:
+            flash(message, "warning")
+        flash(f"Entrega múltiple #{batch.id} guardada correctamente", "success")
+        return redirect(url_for("delivery_batch_pdf", batch_id=batch.id))
+
+    return render_template("delivery_multiple.html", employees=employees, products=products)
+
+
+@app.route("/delivery-batch/<int:batch_id>/pdf")
+@login_required
+def delivery_batch_pdf(batch_id):
+    batch = DeliveryBatch.query.get_or_404(batch_id)
+    pdf_path = os.path.join(REPORT_DIR, f"delivery_batch_{batch.id}.pdf")
+    c = canvas.Canvas(pdf_path, pagesize=letter)
+    width, height = letter
+    y = height - 50
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(50, y, "Entrega Múltiple de Dotación EPP - Santander")
+    y -= 38
+    c.setFont("Helvetica", 11)
+    header_lines = [
+        f"Entrega #: {batch.id}",
+        f"Fecha: {batch.date.strftime('%Y-%m-%d %H:%M')}",
+        f"Sticker empleado: {batch.employee.sticker}",
+        f"Empleado: {batch.employee.name}",
+        f"Cargo: {batch.employee.position}",
+        f"Empresa: {batch.employee.company}",
+    ]
+    for line in header_lines:
+        c.drawString(50, y, line)
+        y -= 20
+
+    y -= 10
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, y, "Productos entregados")
+    y -= 22
+    c.setFont("Helvetica", 11)
+    for item in batch.items:
+        if y < 100:
+            c.showPage()
+            y = height - 50
+            c.setFont("Helvetica", 11)
+        c.drawString(65, y, f"- {item.product.code} - {item.product.name}: {item.quantity}")
+        y -= 18
+
+    if batch.notes:
+        y -= 10
+        c.drawString(50, y, f"Observaciones: {batch.notes}")
+        y -= 22
+
+    y -= 25
+    c.drawString(50, y, "Firma trabajador: ________________________________")
+    y -= 35
+    c.drawString(50, y, "Entregado por: _________________________________")
+    c.save()
+    return send_file(pdf_path, as_attachment=True)
+
+
 @app.route("/history")
 @login_required
 def history():
     deliveries = Delivery.query.order_by(Delivery.date.desc()).all()
     movements = StockMovement.query.order_by(StockMovement.date.desc()).limit(100).all()
-    return render_template("history.html", deliveries=deliveries, movements=movements)
+    batches = DeliveryBatch.query.order_by(DeliveryBatch.date.desc()).limit(50).all()
+    return render_template("history.html", deliveries=deliveries, movements=movements, batches=batches)
 
 
 @app.route("/low-stock")

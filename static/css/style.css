@@ -2,3 +2,4 @@
 @media(max-width:700px){nav{display:block}nav a{display:block;margin:8px 0}.right{margin-left:0}.search{display:block}table{font-size:13px}}
 .warning{background:#fff3cd;color:#5f4500}.info{background:#dff3ff;color:#12445c}.muted{color:#666}
 .actions{white-space:nowrap}.btn.small{padding:7px 9px;font-size:12px}.secondary{background:#607d73!important}.cards div p{min-height:32px}.form a.btn{display:inline-block;margin-left:8px}nav a{margin:2px 0}
+.line-item{background:#f7faf9;border:1px solid #e0ebe7;border-radius:10px;padding:12px;margin:10px 0}.line-item select,.line-item input{margin-bottom:8px}

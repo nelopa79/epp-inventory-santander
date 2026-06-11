@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Entrega múltiple EPP</h1>
+<div class="alert info">Selecciona un empleado y agrega varios productos en una sola entrega. El sistema valida stock, descuenta inventario y genera un PDF único.</div>
+<form method="post" enctype="multipart/form-data" class="form">
+  <label>Empleado / Sticker</label>
+  <select name="employee_id" required>
+    {% for e in employees %}<option value="{{e.id}}">{{e.sticker}} - {{e.name}}{% if e.company %} / {{e.company}}{% endif %}</option>{% endfor %}
+  </select>
+
+  <h2>Productos</h2>
+  <div id="items">
+    <div class="line-item">
+      <label>Producto</label>
+      <select name="product_id[]" required>
+        <option value="">Seleccione producto</option>
+        {% for p in products %}<option value="{{p.id}}">{{p.code}} - {{p.name}} (Stock: {{p.quantity}})</option>{% endfor %}
+      </select>
+      <label>Cantidad</label>
+      <input name="quantity[]" type="number" min="1" value="1" required>
+    </div>
+  </div>
+
+  <button type="button" class="btn" onclick="addItem()">+ Agregar producto</button>
+
+  <label>Observaciones</label>
+  <input name="notes" placeholder="Entrega inicial, reposición, daño, pérdida, etc.">
+
+  <label>Foto de evidencia</label>
+  <input name="photo" type="file" accept="image/*" capture="environment">
+
+  <button>Guardar entrega múltiple</button>
+</form>
+
+<script>
+function addItem(){
+  const container = document.getElementById('items');
+  const first = container.querySelector('.line-item');
+  const clone = first.cloneNode(true);
+  clone.querySelector('select').selectedIndex = 0;
+  clone.querySelector('input').value = 1;
+  container.appendChild(clone);
+}
+</script>
+{% endblock %}

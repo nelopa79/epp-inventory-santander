@@ -1,1 +1,25 @@
-{% extends 'base.html' %}{% block content %}<h1>Historial</h1><h2>Entregas</h2><table><tr><th>Fecha</th><th>Sticker</th><th>Empleado</th><th>Producto</th><th>Cantidad</th><th>PDF</th></tr>{% for d in deliveries %}<tr><td>{{d.date.strftime('%Y-%m-%d %H:%M')}}</td><td>{{d.employee.sticker}}</td><td>{{d.employee.name}}</td><td>{{d.product.code}} - {{d.product.name}}</td><td>{{d.quantity}}</td><td><a href="{{ url_for('delivery_pdf', delivery_id=d.id) }}">PDF</a></td></tr>{% endfor %}</table><h2>Movimientos</h2><table><tr><th>Fecha</th><th>Tipo</th><th>Producto</th><th>Cantidad</th><th>Nota</th></tr>{% for m in movements %}<tr><td>{{m.date.strftime('%Y-%m-%d %H:%M')}}</td><td>{{m.movement_type}}</td><td>{{m.product.code}} - {{m.product.name}}</td><td>{{m.quantity}}</td><td>{{m.notes}}</td></tr>{% endfor %}</table>{% endblock %}
+{% extends 'base.html' %}
+{% block content %}
+<h1>Historial</h1>
+
+<h2>Entregas múltiples</h2>
+<table>
+<tr><th>Fecha</th><th>Sticker</th><th>Empleado</th><th>Productos</th><th>PDF</th></tr>
+{% for b in batches %}
+<tr>
+  <td>{{b.date.strftime('%Y-%m-%d %H:%M')}}</td>
+  <td>{{b.employee.sticker}}</td>
+  <td>{{b.employee.name}}</td>
+  <td>{% for item in b.items %}{{item.product.code}} - {{item.product.name}} x{{item.quantity}}<br>{% endfor %}</td>
+  <td><a href="{{ url_for('delivery_batch_pdf', batch_id=b.id) }}">PDF</a></td>
+</tr>
+{% endfor %}
+</table>
+
+<h2>Entregas individuales</h2>
+<table><tr><th>Fecha</th><th>Sticker</th><th>Empleado</th><th>Producto</th><th>Cantidad</th><th>PDF</th></tr>
+{% for d in deliveries %}<tr><td>{{d.date.strftime('%Y-%m-%d %H:%M')}}</td><td>{{d.employee.sticker}}</td><td>{{d.employee.name}}</td><td>{{d.product.code}} - {{d.product.name}}</td><td>{{d.quantity}}</td><td><a href="{{ url_for('delivery_pdf', delivery_id=d.id) }}">PDF</a></td></tr>{% endfor %}</table>
+
+<h2>Movimientos</h2>
+<table><tr><th>Fecha</th><th>Tipo</th><th>Producto</th><th>Cantidad</th><th>Nota</th></tr>{% for m in movements %}<tr><td>{{m.date.strftime('%Y-%m-%d %H:%M')}}</td><td>{{m.movement_type}}</td><td>{{m.product.code}} - {{m.product.name}}</td><td>{{m.quantity}}</td><td>{{m.notes}}</td></tr>{% endfor %}</table>
+{% endblock %}
